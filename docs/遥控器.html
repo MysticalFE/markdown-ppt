@@ -1,0 +1,222 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <title>遥控器</title>
+  <link rel="stylesheet" rev="stylesheet" href="./iconfont.css" type="text/css">
+  <script type="text/javascript">
+  document.addEventListener('touchstart', function() {}, false)
+  </script>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+      -webkit-user-select: none; 
+      user-select: none; 
+    }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    .box {
+      background-color: #cdf3f7;
+      height: 100%;
+      display: -webkit-box;
+      -webkit-box-align: center;
+      -webkit-box-pack: center;
+    }
+    .button-group {
+      padding-top: 20px;
+      width: 300px;
+      height: 300px;
+    }
+
+    .outter-circle {
+      position: relative;
+      margin-left: 10px;
+      width: 280px;
+      height: 280px;
+      background-color: lightcyan;
+      border-radius: 100%;
+      overflow: hidden;
+      transform-origin: center;
+      transform: rotate(45deg);
+    }
+
+    .inner-parts {
+      float: left;
+      width: 140px;
+      height: 140px;
+      line-height: 140px;
+      text-align: center;
+      position: relative;
+    }
+    .inner-parts:active {
+      background-color: rgba(0, 0,0, 0.3);
+    }
+
+    .silver {
+      background-color: silver;
+    }
+
+    .gold {
+      background-color: gold;
+    }
+
+    .blue {
+      background-color: blue;
+    }
+
+    .brown {
+      background-color: brown;
+    }
+
+    .inner-circle {
+      z-index: 100;
+      position: absolute;
+      margin-top: 70px;
+      margin-left: 70px;
+      width: 140px;
+      height: 140px;
+      line-height: 140px;
+      text-align: center;
+      border-radius: 100%;
+      background-color: lightblue;
+    }
+
+    .rotate {
+      display: inline-block;
+      transform: rotate(-45deg);
+      font-size: 40px;
+      color: #fff;
+    }
+    .rotate  .iconfont {
+      font-size: 40px;
+    }
+    .inner-circle:active {
+      background-color: #03a9f4;
+    }
+
+    /* select */
+    .select {
+		display: inline-block;
+		width: 300px;
+		position: relative;
+		vertical-align: middle;
+		padding: 0;
+		overflow: hidden;
+		background-color: #fff;
+		color: #555;
+		border: 1px solid #aaa;
+		text-shadow: none;
+		border-radius: 4px;	
+		transition: box-shadow 0.25s ease;
+		z-index: 2;
+	}
+ 
+	.select:hover {
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+	}
+ 
+	.select:before {
+		content: "";
+		position: absolute;
+		width: 0;
+		height: 0;
+		border: 10px solid transparent;
+		border-top-color: #ccc;
+		top: 14px;
+		right: 10px;
+		cursor: pointer;
+		z-index: -2;
+	}
+	.select select {
+		cursor: pointer;
+		padding: 10px;
+		width: 100%;
+		border: none;
+		background: transparent;
+		background-image: none;
+		-webkit-appearance: none;
+		-moz-appearance: none;
+	}
+ 
+	.select select:focus {
+		outline: none;
+  }
+  .select-cmp {
+    position: absolute;
+    top: 10%;
+    margin: 0 auto;
+  }
+
+  </style>
+</head>
+
+<body class="box">
+  <div class="button-group">
+    <div class="select-cmp">
+      <h5>选择PPT</h5>
+      <div class="select">
+        <select id="ppt-select" name="cars" onchange="selectChange(this)"></select>
+      </div>
+    </div>
+    <div class="outter-circle">
+      <div class="inner-parts brown" onclick="btnClick(this, 'top')" data-type="volAdd">
+        <span class="rotate"><span class="iconfont icon-top"></span></span>
+      </div>
+      <div class="inner-parts silver" onclick="btnClick(this, 'right') " data-type="chaAdd">
+        <span class="rotate"><span class="iconfont icon-right"></span></span>
+      </div>
+      <div class="inner-parts blue" onclick="btnClick(this, 'left')" data-type="chaDes">
+        <span class="rotate"><span class="iconfont icon-left"></span></span>
+      </div>
+      <div class="inner-parts gold" onclick="btnClick(this, 'bottom')" data-type="volDes">
+        <span class="rotate"><span class="iconfont icon-bottom"></span></span>
+      </div>
+
+      <div class="inner-circle" data-type="ok">
+        <span class="ok rotate">OK</span>
+      </div>
+    </div>
+  </div>
+  <script src="../plugin/socket.io/socket.io.js" type="" text/javascript"> </script>
+  <script src="../plugin/multiplex/controlClient.js" type="" text/javascript"> </script>
+  <script src="../plugin/zeptojs/zepto.min.js" type="" text/javascript"> </script>
+  <script>
+    (function() {
+      var host = window.location.hostname;
+      var socketUrl = host + ':1948';
+      var rc = new RemoteControl(socketUrl);
+      //获取ppt信息
+      rc.on(RemoteControl.SOCKET_SYNC_PPT_INFOS, function(data) {
+        var elm = $('#ppt-select');
+        let isFirst = true;
+        $.each(data, function(k, v) {
+          var childs = elm.find('option[value="'+k+'"]');
+          if(childs.length > 0) {
+            isFirst = false;
+            return;
+          }
+          elm.append('<option value="' + k+ '" >'+ v.name +'</option>')
+        })
+        let keys = Object.keys(data);
+        if(isFirst && keys.length > 0) {
+          rc.switchPPT(keys[0]);
+        }
+      })
+      window.btnClick =  function(e, type) {
+        rc.directionAction(type);
+      }
+      window.selectChange = function(e) {
+        var value = e.value;
+        if(!rc.pptInfos || !rc.pptInfos[value]) return;
+        rc.switchPPT(value)
+      }
+    })()
+  </script>
+</body>
+
+</html>
